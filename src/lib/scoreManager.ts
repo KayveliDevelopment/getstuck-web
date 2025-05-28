@@ -1,11 +1,8 @@
 import { GameState } from "./gameTypes";
 
-/* ------------------------------------------------------------------ */
-/*  TYPES                                                             */
-/* ------------------------------------------------------------------ */
 export type ScoreBreakdown = {
-  numerals: number; // sum of A(1)‑9 values
-  courts: number;   // count of J,Q,K still face‑up
+  numerals: number;
+  courts: number;
 };
 
 export type Scores = {
@@ -15,9 +12,6 @@ export type Scores = {
   blackBreakdown: ScoreBreakdown;
 };
 
-/* ------------------------------------------------------------------ */
-/*  RAW TALLY (no winner applied)                                     */
-/* ------------------------------------------------------------------ */
 export function calculateScores(game: GameState): Scores {
   let redNumerals = 0;
   let blackNumerals = 0;
@@ -26,15 +20,26 @@ export function calculateScores(game: GameState): Scores {
 
   for (const row of game.board) {
     for (const card of row) {
-      if (!card || card.flipped) continue; // ignore faced‑down cards
+      if (!card || card.flipped) continue;
 
       if (card.val === 1) {
-        card.isRed ? redNumerals++ : blackNumerals++;
+        if (card.isRed) {
+          redNumerals++;
+        } else {
+          blackNumerals++;
+        }
       } else if (card.val >= 2 && card.val <= 9) {
-        card.isRed ? (redNumerals += card.val) : (blackNumerals += card.val);
+        if (card.isRed) {
+          redNumerals += card.val;
+        } else {
+          blackNumerals += card.val;
+        }
       } else {
-        // J, Q, K  → court
-        card.isRed ? redCourts++ : blackCourts++;
+        if (card.isRed) {
+          redCourts++;
+        } else {
+          blackCourts++;
+        }
       }
     }
   }
@@ -47,13 +52,7 @@ export function calculateScores(game: GameState): Scores {
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  FINAL SCORING (+10 / –10 COURT RULE)                              */
-/* ------------------------------------------------------------------ */
-export function finaliseScores(
-  raw: Scores,
-  winner: "red" | "black"
-): Scores {
+export function finaliseScores(raw: Scores, winner: "red" | "black"): Scores {
   const redTotal =
     raw.redBreakdown.numerals +
     raw.redBreakdown.courts * (winner === "red" ? 10 : -10);
@@ -70,17 +69,10 @@ export function finaliseScores(
   };
 }
 
-/** Convenience – compute final scores directly from a game state */
-export function computeFinalScores(
-  game: GameState,
-  winner: "red" | "black"
-): Scores {
+export function computeFinalScores(game: GameState, winner: "red" | "black"): Scores {
   return finaliseScores(calculateScores(game), winner);
 }
 
-/* ------------------------------------------------------------------ */
-/*  LOCAL STORAGE HISTORY                                             */
-/* ------------------------------------------------------------------ */
 export type GameResult = {
   winner: "red" | "black" | "draw";
   timestamp: string;
@@ -102,14 +94,18 @@ export function saveGame(result: GameResult): void {
   if (typeof window === "undefined") return;
   try {
     const history = getHistory();
-    const updated = [result, ...history].slice(0, 50); // keep 50 latest
+    const updated = [result, ...history].slice(0, 50);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
-    /* silent */
+    // Silent fail
   }
 }
 
 export function clearHistory(): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(STORAGE_KEY);
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Silent fail
+  }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import Controls from "@/components/Controls";
 import GameBoard from "@/components/GameBoard";
 import MatchHistory from "@/components/MatchHistory";
